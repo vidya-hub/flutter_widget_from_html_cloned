@@ -1,11 +1,3 @@
-## 0.8.2
-
-- Add support for flutter_widget_from_html_core@0.15.1 (#1269)
-
-## 0.8.1
-
-- Fix SVG does not respect width/height attributes (#1144)
-
 ## 0.8.0+4
 
 - Add support for flutter_widget_from_html_core@0.14.0 (#948)

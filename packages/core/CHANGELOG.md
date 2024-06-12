@@ -1,26 +1,3 @@
-## 0.15.1
-
-- Drop support for Flutter 3.7 (#1250)
-- Add support for `currentcolor` (#1240)
-- Fix zero size image (#1266)
-
-## 0.14.12
-
-- Expand roman support to 3999 (#1154, authored by @ngthailam)
-- Add support for `text-shadow` (#1158, also by @ngthailam 🎉)
-- Improve support for `display: flex` (#1229, #1235)
-- Fix bug cannot select text of nested HtmlWidget inside list view render mode (#1231)
-- Fix white spaces are removed in PRE tag (#1233)
-
-## 0.14.11
-
-- Fix infinite `TextStyle.height` (#1147)
-- Deprecate `InheritedProperties.style` getter (#1147)
-
-## 0.14.10+1
-
-- Fix default border color to match text color (#1123)
-
 ## 0.14.9
 
 - Fix justify text inside a table (#1120)
@@ -268,7 +245,7 @@ This release includes some changes that may require migration if you have a cust
 - Add support for `HtmlWidget.onTapImage` callback (#398)
 - Add support for file:// images (#432)
 - Allow getting parsed inline styles from `dom.Element` directly (#367)
-- Improve support for inline styles border, border-collapse and box-sizing (#365)
+- Improve support for inline styles border, border-collapse and box-sizing  (#365)
 - Fix line metrics are unavailable on Flutter web (#383)
 - Fix IMG tag with dimensions being stretched (#429)
 

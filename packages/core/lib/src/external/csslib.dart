@@ -40,17 +40,20 @@ extension CssAngleTermExtension on css.AngleTerm {
 
 /// An extension on [css.Declaration].
 extension CssDeclarationExtension on css.Declaration {
+  static Expando<List<css.Expression>>? _expando;
+
   /// Returns CSS expressions.
   ///
   /// Collecting expressions is a non-trivial task but the result is cached
   /// so it's safe to call this again and again.
   List<css.Expression> get values {
-    final scoped = expression;
-    if (scoped is css.Expressions) {
-      return scoped.expressions;
+    final expando = _expando ??= Expando();
+    final existing = expando[this];
+    if (existing != null) {
+      return existing;
     }
 
-    return const [];
+    return expando[this] = _ExpressionsCollector.collect(this);
   }
 
   /// Returns the CSS expression.

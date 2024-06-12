@@ -10,11 +10,11 @@ import 'core_widget_factory.dart';
 import 'widgets/inline_custom_widget.dart';
 
 export 'external/csslib.dart';
+export 'external/text_scale_factor.dart';
 export 'modes/render_mode.dart';
 export 'widgets/css_sizing.dart';
 export 'widgets/horizontal_margin.dart';
 export 'widgets/html_details.dart';
-export 'widgets/html_flex.dart';
 export 'widgets/html_list_item.dart';
 export 'widgets/html_list_marker.dart';
 export 'widgets/html_ruby.dart';

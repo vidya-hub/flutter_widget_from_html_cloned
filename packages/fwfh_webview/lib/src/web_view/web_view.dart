@@ -1,10 +1,8 @@
-import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 import 'fallback.dart'
     if (dart.library.io) 'io.dart'
-    if (dart.library.js_interop) 'js_interop.dart';
+    if (dart.library.html) 'html.dart';
 
 /// An embedded web view.
 class WebView extends StatefulWidget {
@@ -22,8 +20,12 @@ class WebView extends StatefulWidget {
   /// Flutter Web is not supported.
   final bool autoResize;
 
-  /// A legacy field that is no longer used.
-  @Deprecated('No longer used.')
+  /// The auto resize intevals.
+  ///
+  /// By default, resizing will be attempted three times
+  /// - On page load
+  /// - After 1s
+  /// - After another 2s
   final List<Duration> autoResizeIntervals;
 
   /// {@template web_view.debuggingEnabled}
@@ -34,11 +36,6 @@ class WebView extends StatefulWidget {
   /// Flutter Web is not supported.
   /// {@endtemplate}
   final bool debuggingEnabled;
-
-  /// {@template web_view.gestureRecognizers}
-  /// Specifies which gestures should be consumed by the web view.
-  /// {@endtemplate}
-  final Set<Factory<OneSequenceGestureRecognizer>> gestureRecognizers;
 
   /// The callback to handle navigation request.
   ///
@@ -81,13 +78,11 @@ class WebView extends StatefulWidget {
   /// {@endtemplate}
   final void Function(Widget child)? onAndroidShowCustomWidget;
 
-  /// {@template web_view.unsupportedWorkaroundForIssue37}
   /// Controls whether or not to apply workaround for
   /// [video continue playing after locking the phone or navigate to another screen](https://github.com/daohoangson/flutter_widget_from_html/issues/37)
   /// issue.
   ///
   /// Default: `true`.
-  /// {@endtemplate}
   final bool unsupportedWorkaroundForIssue37;
 
   /// {@template web_view.userAgent}
@@ -101,10 +96,13 @@ class WebView extends StatefulWidget {
   const WebView(
     this.url, {
     required this.aspectRatio,
-    @Deprecated('No longer used.') this.autoResizeIntervals = const [],
     bool? autoResize,
+    this.autoResizeIntervals = const [
+      Duration.zero,
+      Duration(seconds: 1),
+      Duration(seconds: 2),
+    ],
     this.debuggingEnabled = false,
-    this.gestureRecognizers = const <Factory<OneSequenceGestureRecognizer>>{},
     this.interceptNavigationRequest,
     this.js = true,
     this.mediaPlaybackAlwaysAllow = false,

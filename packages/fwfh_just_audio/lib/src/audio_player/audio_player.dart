@@ -91,7 +91,7 @@ class _AudioPlayerState extends State<AudioPlayer> {
           final theme = Theme.of(context);
           final fontSize = DefaultTextStyle.of(context).style.fontSize ?? 14.0;
 
-          // TODO: remove lint ignore when our minimum Flutter version >= 3.16
+          // TODO: remove lint ignore when our minimum Flutter version >= 3.10
           // ignore: deprecated_member_use
           final tsf = MediaQuery.textScaleFactorOf(context);
           final iconSize = fontSize * tsf;
@@ -192,7 +192,7 @@ class _PositionText extends StatelessWidget {
               text,
               style: TextStyle(fontSize: size),
 
-              // TODO: remove lint ignore when our minimum Flutter version >= 3.16
+              // TODO: remove lint ignore when our minimum Flutter version >= 3.10
               // ignore: deprecated_member_use
               textScaleFactor: 1,
             );
@@ -231,7 +231,7 @@ class _PositionSlider extends StatelessWidget {
         builder: (_, duration) => StreamBuilder<Duration>(
           builder: (_, position) {
             final max = duration.data?.inMilliseconds.toDouble();
-            if (max == null || max == 0) {
+            if (max == null) {
               return widget0;
             }
 

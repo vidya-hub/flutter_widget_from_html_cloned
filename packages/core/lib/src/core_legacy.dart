@@ -27,11 +27,6 @@ extension LegacyWidgetFactory on WidgetFactory {
 typedef TextStyleHtml = InheritedProperties;
 
 extension LegacyTextStyleHtml on TextStyleHtml {
-  /// The [TextStyle].
-  @Deprecated('Use `prepareTextStyle` to build one. '
-      'For usage in resolving.copyWith, check the migration guide.')
-  TextStyle get style => prepareTextStyle();
-
   /// Gets dependency by type [T].
   @Deprecated('Use .get instead.')
   T getDependency<T>() {

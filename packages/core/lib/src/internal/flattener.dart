@@ -168,7 +168,7 @@ class Flattener implements Flattened {
 
           return wf.buildTextSpan(
             recognizer: _getInlineRecognizer(context, resolved),
-            style: resolved.prepareTextStyle(),
+            style: resolved.style,
             text: text,
           );
         },
@@ -233,7 +233,7 @@ class Flattener implements Flattened {
           span = wf.buildTextSpan(
             children: children,
             recognizer: _getInlineRecognizer(context, resolved),
-            style: resolved.prepareTextStyle(),
+            style: resolved.style,
             text: text,
           );
         }
@@ -369,13 +369,14 @@ extension on List<_String> {
 
     for (var i = min; i <= max; i++) {
       final str = this[i];
+      if (str.shouldBeSwallowed) {
+        continue;
+      }
 
       if (str.isWhitespace) {
         switch (whitespace) {
           case CssWhitespace.normal:
-            if (!str.shouldBeSwallowed) {
-              buffer.write(' ');
-            }
+            buffer.write(' ');
             break;
           case CssWhitespace.nowrap:
             buffer.write('\u00A0');

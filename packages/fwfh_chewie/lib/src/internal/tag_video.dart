@@ -75,6 +75,7 @@ class TagVideo {
       loop: attrs.containsKey(kAttributeVideoLoop),
       posterUrl: wf.urlFull(attrs[kAttributeVideoPoster] ?? ''),
       width: tryParseDoubleFromMap(attrs, kAttributeVideoWidth),
+      showDownloadOption: true,
     );
   }
 }

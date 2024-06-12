@@ -55,7 +55,6 @@ class StyleDisplayFlex {
         return WidgetPlaceholder(
           debugLabel: kCssDisplayFlex,
           builder: (context, _) {
-            final resolved = tree.inheritanceResolvers.resolve(context);
             final unwrapped = children
                 .map((child) => WidgetPlaceholder.unwrap(context, child))
                 .where((child) => child != widget0)
@@ -68,7 +67,6 @@ class StyleDisplayFlex {
                   ? Axis.horizontal
                   : Axis.vertical,
               mainAxisAlignment: _toMainAxisAlignment(justifyContent),
-              textDirection: resolved.directionOrLtr,
             );
           },
         );

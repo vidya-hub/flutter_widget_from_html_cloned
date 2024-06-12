@@ -1,10 +1,6 @@
 part of '../core_parser.dart';
 
-CssLength? tryParseCssLength(css.Expression? expression) {
-  if (expression == null) {
-    return null;
-  }
-
+CssLength? tryParseCssLength(css.Expression expression) {
   if (expression is css.EmTerm) {
     return CssLength((expression.value as num).toDouble(), CssLengthUnit.em);
   } else if (expression is css.LengthTerm) {

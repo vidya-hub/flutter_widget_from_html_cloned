@@ -44,6 +44,7 @@ class VideoPlayer extends StatefulWidget {
 
   /// The widget to be shown before video is loaded.
   final Widget? poster;
+  final Function(String?)? onDownloadClick;
 
   /// Creates a player.
   const VideoPlayer(
@@ -57,6 +58,7 @@ class VideoPlayer extends StatefulWidget {
     this.loadingBuilder,
     this.loop = false,
     this.poster,
+    this.onDownloadClick,
   });
 
   @override
@@ -142,6 +144,7 @@ class _VideoPlayerState extends State<VideoPlayer> {
         placeholder: placeholder,
         showControls: widget.controls,
         videoPlayerController: vpc,
+        onDownloadClick: widget.onDownloadClick,
       );
     });
   }

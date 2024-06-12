@@ -8,7 +8,7 @@ import 'core_parser.dart';
 
 InheritedProperties color(InheritedProperties resolving, Color color) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         color: color,
         debugLabel: 'fwfh: $kCssColor',
       ),
@@ -16,7 +16,7 @@ InheritedProperties color(InheritedProperties resolving, Color color) =>
 
 InheritedProperties fontFamily(InheritedProperties resolving, List<String> v) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         debugLabel: 'fwfh: $kCssFontFamily',
         fontFamily: v.isNotEmpty ? v.first : null,
         fontFamilyFallback: v.skip(1).toList(growable: false),
@@ -25,7 +25,7 @@ InheritedProperties fontFamily(InheritedProperties resolving, List<String> v) =>
 
 InheritedProperties fontSize(InheritedProperties resolving, css.Expression v) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         debugLabel: 'fwfh: $kCssFontSize',
         fontSize: _fontSizeTryParse(resolving, v),
       ),
@@ -33,7 +33,7 @@ InheritedProperties fontSize(InheritedProperties resolving, css.Expression v) =>
 
 InheritedProperties fontSizeEm(InheritedProperties resolving, double v) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         debugLabel: 'fwfh: $kCssFontSize ${v}em',
         fontSize: _fontSizeTryParseCssLength(
           resolving,
@@ -44,7 +44,7 @@ InheritedProperties fontSizeEm(InheritedProperties resolving, double v) =>
 
 InheritedProperties fontSizeTerm(InheritedProperties resolving, String v) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         debugLabel: 'fwfh: $kCssFontSize $v',
         fontSize: _fontSizeTryParseTerm(resolving, v),
       ),
@@ -69,7 +69,7 @@ double? _fontSizeTryParse(InheritedProperties resolved, css.Expression v) {
 double? _fontSizeTryParseCssLength(InheritedProperties resolved, CssLength v) =>
     v.getValue(
       resolved,
-      baseValue: resolved.parent?.get<TextStyle>()?.fontSize,
+      baseValue: resolved.parent?.style.fontSize,
       scaleFactor: resolved.get<TextScaleFactor>()?.value,
     );
 
@@ -91,11 +91,9 @@ double? _fontSizeTryParseTerm(InheritedProperties resolved, String value) {
       return _fontSizeMultiplyRootWith(resolved, .5625);
 
     case kCssFontSizeLarger:
-      final parent = resolved.parent?.get<TextStyle>()?.fontSize;
-      return _fontSizeMultiplyWith(parent, 1.2);
+      return _fontSizeMultiplyWith(resolved.parent?.style.fontSize, 1.2);
     case kCssFontSizeSmaller:
-      final parent = resolved.parent?.get<TextStyle>()?.fontSize;
-      return _fontSizeMultiplyWith(parent, 15 / 18);
+      return _fontSizeMultiplyWith(resolved.parent?.style.fontSize, 15 / 18);
   }
 
   return null;
@@ -107,7 +105,7 @@ double? _fontSizeMultiplyRootWith(InheritedProperties resolved, double value) {
     root = x;
   }
 
-  return _fontSizeMultiplyWith(root.get<TextStyle>()?.fontSize, value);
+  return _fontSizeMultiplyWith(root.style.fontSize, value);
 }
 
 double? _fontSizeMultiplyWith(double? fontSize, double value) =>
@@ -115,7 +113,7 @@ double? _fontSizeMultiplyWith(double? fontSize, double value) =>
 
 InheritedProperties fontStyle(InheritedProperties resolving, FontStyle v) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         debugLabel: 'fwfh: $kCssFontStyle',
         fontStyle: v,
       ),
@@ -123,7 +121,7 @@ InheritedProperties fontStyle(InheritedProperties resolving, FontStyle v) =>
 
 InheritedProperties fontWeight(InheritedProperties resolving, FontWeight v) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         debugLabel: 'fwfh: $kCssFontWeight',
         fontWeight: v,
       ),
@@ -133,36 +131,67 @@ InheritedProperties lineHeight(
   InheritedProperties resolving,
   css.Expression expression,
 ) {
-  final height = _lineHeightTryParse(expression);
+  final height = _lineHeightTryParse(resolving, expression);
   if (height == null) {
     return resolving;
   }
 
-  return resolving.copyWith(value: height);
+  if (height == -1) {
+    final normal = resolving.get<NormalLineHeight>();
+    if (normal == null) {
+      return resolving;
+    }
+    return resolving.copyWith(
+      style: resolving.style.copyWith(
+        debugLabel: 'fwfh: $kCssLineHeight normal',
+        height: normal.value,
+      ),
+    );
+  }
+
+  return resolving.copyWith(
+    style: resolving.style.copyWith(
+      debugLabel: 'fwfh: $kCssLineHeight $height',
+      height: height,
+    ),
+  );
 }
 
-TextStyleLineHeight? _lineHeightTryParse(css.Expression expression) {
-  if (expression is css.LiteralTerm) {
-    if (expression is css.NumberTerm) {
-      final number = expression.number.toDouble();
+double? _lineHeightTryParse(InheritedProperties resolved, css.Expression v) {
+  if (v is css.LiteralTerm) {
+    if (v is css.NumberTerm) {
+      final number = v.number.toDouble();
       if (number > 0) {
-        final percentage = CssLength(number * 100, CssLengthUnit.percentage);
-        return TextStyleLineHeight(percentage);
+        return number;
       }
     }
 
-    switch (expression.valueAsString) {
+    switch (v.valueAsString) {
       case kCssLineHeightNormal:
-        return const TextStyleLineHeight();
+        return -1;
     }
   }
 
-  final length = tryParseCssLength(expression);
+  final fontSize = resolved.style.fontSize;
+  if (fontSize == null) {
+    return null;
+  }
+
+  final length = tryParseCssLength(v);
   if (length == null) {
     return null;
   }
 
-  return TextStyleLineHeight(length);
+  final lengthValue = length.getValue(
+    resolved,
+    baseValue: fontSize,
+    scaleFactor: resolved.get<TextScaleFactor>()?.value,
+  );
+  if (lengthValue == null) {
+    return null;
+  }
+
+  return lengthValue / fontSize;
 }
 
 InheritedProperties textDirection(InheritedProperties resolving, String v) {
@@ -205,7 +234,7 @@ FontStyle? fontStyleTryParse(String value) {
 FontWeight? fontWeightTryParse(css.Expression expression) {
   if (expression is css.LiteralTerm) {
     if (expression is css.NumberTerm) {
-      switch (expression.number) {
+      switch (expression.number.toInt()) {
         case 100:
           return FontWeight.w100;
         case 200:

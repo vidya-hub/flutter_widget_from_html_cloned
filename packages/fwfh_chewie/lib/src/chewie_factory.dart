@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_widget_from_html_core/flutter_widget_from_html_core.dart';
 
@@ -18,11 +20,15 @@ mixin ChewieFactory on WidgetFactory {
     required bool loop,
     String? posterUrl,
     double? width,
+    bool showDownloadOption = false,
+    Function(String?)? onDownloadClick,
   }) {
+    log("Build video player");
     final dimensOk = height != null && height > 0 && width != null && width > 0;
     final poster = posterUrl != null
         ? buildImage(tree, ImageMetadata(sources: [ImageSource(posterUrl)]))
         : null;
+
     return VideoPlayer(
       url,
       aspectRatio: dimensOk ? width / height : 16 / 9,
@@ -35,6 +41,9 @@ mixin ChewieFactory on WidgetFactory {
           onLoadingBuilder(context, tree, null, url) ?? widget0,
       loop: loop,
       poster: poster,
+      onDownloadClick: (url) {
+        onVideoDownloadCallback(url ?? "");
+      },
     );
   }
 

@@ -54,21 +54,26 @@ void textDecorationApply(BuildTree tree, css.Declaration style) {
 
 InheritedProperties textDecorationColor(
   InheritedProperties resolving,
-  CssColor value,
+  Color value,
 ) =>
-    resolving.copyWith(value: TextStyleDecorationColor(value));
+    resolving.copyWith(
+      style: resolving.style.copyWith(
+        decorationColor: value,
+        debugLabel: 'fwfh: $kCssTextDecorationColor',
+      ),
+    );
 
 InheritedProperties textDecorationLine(
   InheritedProperties resolving,
   TextDecorationLine value,
 ) {
-  final parent = resolving.parent?.get<TextStyle>()?.decoration;
+  final parent = resolving.parent?.style.decoration;
   final parentOverline = parent?.contains(TextDecoration.overline) == true;
   final parentLineThrough =
       parent?.contains(TextDecoration.lineThrough) == true;
   final parentUnderline = parent?.contains(TextDecoration.underline) == true;
 
-  final current = resolving.get<TextStyle>()?.decoration;
+  final current = resolving.style.decoration;
   final currentOverline = current?.contains(TextDecoration.overline) == true;
   final currentLineThrough =
       current?.contains(TextDecoration.lineThrough) == true;
@@ -95,7 +100,7 @@ InheritedProperties textDecorationLine(
 
   final combined = TextDecoration.combine(list);
   return resolving.copyWith(
-    style: TextStyle(
+    style: resolving.style.copyWith(
       decoration: combined,
       debugLabel: 'fwfh: $kCssTextDecorationLine',
     ),
@@ -107,7 +112,7 @@ InheritedProperties textDecorationStyle(
   TextDecorationStyle value,
 ) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         decorationStyle: value,
         debugLabel: 'fwfh: $kCssTextDecorationStyle',
       ),
@@ -118,7 +123,7 @@ InheritedProperties textDecorationThickness(
   double value,
 ) =>
     resolving.copyWith(
-      style: TextStyle(
+      style: resolving.style.copyWith(
         decorationThickness: value,
         debugLabel: 'fwfh: $kCssTextDecorationThickness',
       ),

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart'
         // we want to limit Material usages to be as generic as possible
         CircularProgressIndicator,
         Tooltip;
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:html/dom.dart' as dom;
 import 'package:logging/logging.dart';
@@ -18,7 +19,6 @@ import 'internal/margin_vertical.dart';
 import 'internal/platform_specific/fallback.dart'
     if (dart.library.io) 'internal/platform_specific/io.dart';
 import 'internal/text_ops.dart' as text_ops;
-import 'utils/roman_numerals_converter.dart';
 
 final _logger = Logger('fwfh.WidgetFactory');
 
@@ -171,9 +171,9 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
     if (borderRadius != null) {
       final borderIsUniform = decoration.border?.isUniform ?? true;
       if (borderIsUniform) {
-        // TODO: add support for non-uniform border
-        // https://github.com/flutter/flutter/commit/5054b6e
-        // https://pub.dev/packages/non_uniform_border
+        // TODO: require uniform color & style when our minimum Flutter version >= 3.10
+        // support for non-uniform border has been improved since this commit
+        // https://github.com/flutter/flutter/commit/5054b6e514a7af91db9859b4eb55d71177d19cfa
         decoration = decoration.copyWith(borderRadius: borderRadius);
         clipBehavior = Clip.hardEdge;
       }
@@ -230,28 +230,13 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
     required Axis direction,
     MainAxisAlignment mainAxisAlignment = MainAxisAlignment.start,
     TextBaseline textBaseline = TextBaseline.alphabetic,
-    TextDirection textDirection = TextDirection.ltr,
   }) {
-    return LayoutBuilder(
-      builder: (_, bc) {
-        Widget built = HtmlFlex(
-          crossAxisAlignment: crossAxisAlignment,
-          direction: direction,
-          mainAxisAlignment: mainAxisAlignment,
-          textBaseline: textBaseline,
-          textDirection: textDirection,
-          children: children,
-        );
-        switch (direction) {
-          case Axis.horizontal:
-            built = CssSizingHint(maxWidth: bc.maxWidth, child: built);
-            break;
-          case Axis.vertical:
-            built = CssSizingHint(maxHeight: bc.maxHeight, child: built);
-            break;
-        }
-        return built;
-      },
+    return Flex(
+      crossAxisAlignment: crossAxisAlignment,
+      direction: direction,
+      mainAxisAlignment: mainAxisAlignment,
+      textBaseline: textBaseline,
+      children: children,
     );
   }
 
@@ -378,7 +363,7 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
     int index,
   ) {
     final text = getListMarkerText(listStyleType, index);
-    final textStyle = resolved.prepareTextStyle();
+    final textStyle = resolved.style;
     if (text.isNotEmpty) {
       return buildText(tree, resolved, TextSpan(style: textStyle, text: text));
     }
@@ -412,39 +397,26 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
     InheritedProperties resolved,
     InlineSpan text,
   ) {
-    // pre-compute as many parameters as possible
-    final maxLines = tree.maxLines > 0 ? tree.maxLines : null;
-    final softWrap = resolved.get<CssWhitespace>() != CssWhitespace.nowrap;
-    final textAlign = resolved.get<TextAlign>() ?? TextAlign.start;
-    final textDirection = resolved.get<TextDirection>();
+    const selectionColorDefault = DefaultSelectionStyle.defaultColor;
+    final selectionRegistrar = resolved.get<SelectionRegistrar>();
+    final selectionStyle = resolved.get<DefaultSelectionStyle>();
 
-    return Builder(
-      builder: (context) {
-        // TODO: remove Builder when ListView stops providing its own registrar
-        final selectionRegistrar = SelectionContainer.maybeOf(context);
-        final selectionColor = selectionRegistrar != null
-            ? DefaultSelectionStyle.of(context).selectionColor ??
-                DefaultSelectionStyle.defaultColor
-            : null;
-
-        Widget built = RichText(
-          maxLines: maxLines,
-          overflow: tree.overflow,
-          selectionColor: selectionColor,
-          selectionRegistrar: selectionRegistrar,
-          softWrap: softWrap,
-          text: text,
-          textAlign: textAlign,
-          textDirection: textDirection,
-        );
-
-        if (selectionRegistrar != null) {
-          built = MouseRegion(cursor: SystemMouseCursors.text, child: built);
-        }
-
-        return built;
-      },
+    Widget built = RichText(
+      maxLines: tree.maxLines > 0 ? tree.maxLines : null,
+      overflow: tree.overflow,
+      selectionColor: selectionStyle?.selectionColor ?? selectionColorDefault,
+      selectionRegistrar: selectionRegistrar,
+      softWrap: resolved.get<CssWhitespace>() != CssWhitespace.nowrap,
+      text: text,
+      textAlign: resolved.get() ?? TextAlign.start,
+      textDirection: resolved.get(),
     );
+
+    if (selectionRegistrar != null) {
+      built = MouseRegion(cursor: SystemMouseCursors.text, child: built);
+    }
+
+    return built;
   }
 
   /// Builds [TextSpan].
@@ -508,15 +480,18 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
   /// final direction = resolved.get<TextDirection>();
   /// ```
   Iterable<dynamic> getDependencies(BuildContext context) {
+    final selectionRegistrar = SelectionContainer.maybeOf(context);
     return [
       CssWhitespace.normal,
       Directionality.maybeOf(context) ?? TextDirection.ltr,
+      DefaultSelectionStyle.of(context),
       DefaultTextStyle.of(context).style,
+      if (selectionRegistrar != null) selectionRegistrar,
 
       // performance critical
       // avoid adding broad dependencies like MediaQuery.of(context)
       // because it may invalidate our root properties too often
-      // TODO: remove lint ignore when our minimum Flutter version >= 3.16
+      // TODO: remove lint ignore when our minimum Flutter version >= 3.10
       // ignore: deprecated_member_use
       TextScaleFactor(MediaQuery.textScaleFactorOf(context)),
     ];
@@ -544,15 +519,33 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
       case kCssListStyleTypeDecimal:
         return '$i.';
       case kCssListStyleTypeRomanLower:
-        final roman = intToRomanNumerals(i)?.toLowerCase();
+        final roman = _getListMarkerRoman(i)?.toLowerCase();
         return roman != null ? '$roman.' : '';
       case kCssListStyleTypeRomanUpper:
-        final roman = intToRomanNumerals(i);
+        final roman = _getListMarkerRoman(i);
         return roman != null ? '$roman.' : '';
       case kCssListStyleTypeNone:
       default:
         return '';
     }
+  }
+
+  String? _getListMarkerRoman(int i) {
+    // TODO: find some lib to generate programatically
+    const map = <int, String>{
+      1: 'I',
+      2: 'II',
+      3: 'III',
+      4: 'IV',
+      5: 'V',
+      6: 'VI',
+      7: 'VII',
+      8: 'VIII',
+      9: 'IX',
+      10: 'X',
+    };
+
+    return map[i];
   }
 
   /// Returns an [AssetImage].
@@ -652,6 +645,13 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
   Future<bool> onTapCallback(String url) async {
     final callback = _widget?.onTapUrl;
     return callback != null ? callback(url) : false;
+  }
+
+  void onVideoDownloadCallback(String url) {
+    final callback = _widget?.onVideoDownload;
+    if (callback != null) {
+      callback(url);
+    }
   }
 
   /// Handles user tapping a link.
@@ -1047,7 +1047,7 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
     final key = style.property;
     switch (key) {
       case kCssColor:
-        final color = tryParseColor(style.value)?.rawValue;
+        final color = tryParseColor(style.value);
         if (color != null) {
           tree.inherit(text_ops.color, color);
         }
@@ -1145,10 +1145,6 @@ class WidgetFactory extends WidgetFactoryResetter with AnchorWidgetFactory {
         if (whitespace != null) {
           tree.inherit(text_ops.whitespace, whitespace);
         }
-        break;
-
-      case kCssTextShadow:
-        textShadowApply(tree, style);
         break;
     }
 

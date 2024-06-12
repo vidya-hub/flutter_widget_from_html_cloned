@@ -48,16 +48,12 @@ class StyleBackground {
           );
 
           return placeholder.wrapWith(
-            (context, child) {
-              final resolved = tree.inheritanceResolvers.resolve(context);
-              final resolvedColor = color?.getValue(resolved);
-              return wf.buildDecoration(
-                tree,
-                child,
-                color: resolvedColor,
-                image: image,
-              );
-            },
+            (_, child) => wf.buildDecoration(
+              tree,
+              child,
+              color: color,
+              image: image,
+            ),
           );
         },
         onRenderInline: (tree) {
@@ -66,16 +62,21 @@ class StyleBackground {
             return;
           }
 
-          tree.inherit(_textStyleBackground, color);
+          tree.inherit(_color, color);
         },
         priority: BoxModel.background,
       );
 
-  static InheritedProperties _textStyleBackground(
+  static InheritedProperties _color(
     InheritedProperties resolving,
-    CssColor color,
+    Color color,
   ) =>
-      resolving.copyWith(value: TextStyleBackground(color));
+      resolving.copyWith(
+        style: resolving.style.copyWith(
+          background: Paint()..color = color,
+          debugLabel: 'fwfh: $kCssBackgroundColor',
+        ),
+      );
 }
 
 extension on BuildTree {
@@ -158,7 +159,7 @@ extension on css.Expression {
 @immutable
 class _StyleBackgroundData {
   final AlignmentGeometry alignment;
-  final CssColor? color;
+  final Color? color;
   final String? imageUrl;
   final ImageRepeat repeat;
   final BoxFit size;
@@ -172,7 +173,7 @@ class _StyleBackgroundData {
 
   _StyleBackgroundData copyWith({
     AlignmentGeometry? alignment,
-    CssColor? color,
+    Color? color,
     String? imageUrl,
     ImageRepeat? repeat,
     BoxFit? size,

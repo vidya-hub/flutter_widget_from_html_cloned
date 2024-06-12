@@ -57,6 +57,7 @@ class HtmlWidget extends StatefulWidget {
   /// Returns `true` if the url has been handled,
   /// the default handler will be skipped.
   final FutureOr<bool> Function(String)? onTapUrl;
+  final Function(String)? onVideoDownload;
 
   /// The values that should trigger rebuild.
   ///
@@ -109,6 +110,7 @@ class HtmlWidget extends StatefulWidget {
     List<dynamic>? rebuildTriggers,
     this.renderMode = RenderMode.column,
     this.textStyle,
+    this.onVideoDownload,
   }) : _rebuildTriggers = rebuildTriggers;
 
   @override
@@ -136,6 +138,7 @@ class HtmlWidgetState extends State<HtmlWidget> {
 
   @override
   void initState() {
+    print("html: Here initstate called");
     super.initState();
 
     _rootResolvers = _RootResolvers(this);
@@ -146,6 +149,7 @@ class HtmlWidgetState extends State<HtmlWidget> {
     if (buildAsync) {
       _future = _buildAsync();
     }
+    print("html: Here initstate ended");
   }
 
   @override
@@ -222,14 +226,20 @@ class HtmlWidgetState extends State<HtmlWidget> {
   Future<bool> scrollToAnchor(String id) => _wf.onTapUrl('#$id');
 
   Future<Widget> _buildAsync() async {
-    final domNodes = await compute(_parseHtml, widget.html);
-    if (!mounted) {
-      return widget0;
-    }
+    Widget built = Container();
+    try {
+      final domNodes = await compute(_parseHtml, widget.html);
+      if (!mounted) {
+        return widget0;
+      }
 
-    Timeline.startSync('Build $widget (async)');
-    final built = _buildBody(this, domNodes);
-    Timeline.finishSync();
+      Timeline.startSync('Build $widget (async)');
+      built = _buildBody(this, domNodes);
+      Timeline.finishSync();
+    } catch (error, stackTrace) {
+      built =
+          _wf.onErrorBuilder(context, _rootTree, error, stackTrace) ?? widget0;
+    }
 
     return built;
   }

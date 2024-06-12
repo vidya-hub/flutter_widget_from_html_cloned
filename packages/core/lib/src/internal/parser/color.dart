@@ -1,10 +1,8 @@
 part of '../core_parser.dart';
 
 const kCssColor = 'color';
-const kCssColorCurrentColor = 'currentcolor';
-const kCssColorTransparent = 'transparent';
 
-CssColor? tryParseColor(css.Expression? expression) {
+Color? tryParseColor(css.Expression? expression) {
   if (expression == null) {
     return null;
   }
@@ -31,8 +29,7 @@ CssColor? tryParseColor(css.Expression? expression) {
               : null;
           final hslA = params.length >= 4 ? _parseColorAlpha(params[3]) : 1.0;
           if (h != null && s != null && l != null && hslA != null) {
-            final hslValue = HSLColor.fromAHSL(hslA, h, s, l).toColor();
-            return CssColor.value(hslValue);
+            return HSLColor.fromAHSL(hslA, h, s, l).toColor();
           }
         }
         break;
@@ -45,8 +42,7 @@ CssColor? tryParseColor(css.Expression? expression) {
           final b = _parseColorRgbElement(params[2]);
           final rgbA = params.length >= 4 ? _parseColorAlpha(params[3]) : 1.0;
           if (r != null && g != null && b != null && rgbA != null) {
-            final rgbValue = Color.fromARGB((rgbA * 255).ceil(), r, g, b);
-            return CssColor.value(rgbValue);
+            return Color.fromARGB((rgbA * 255).ceil(), r, g, b);
           }
         }
         break;
@@ -56,24 +52,23 @@ CssColor? tryParseColor(css.Expression? expression) {
     final hex = expression.text.toUpperCase();
     switch (hex.length) {
       case 3:
-        return CssColor(int.parse('0xFF${_x2(hex)}'));
+        return Color(int.parse('0xFF${_x2(hex)}'));
       case 4:
         final alpha = hex[3];
         final rgb = hex.substring(0, 3);
-        return CssColor(int.parse('0x${_x2(alpha)}${_x2(rgb)}'));
+        return Color(int.parse('0x${_x2(alpha)}${_x2(rgb)}'));
       case 6:
-        return CssColor(int.parse('0xFF$hex'));
+        return Color(int.parse('0xFF$hex'));
       case 8:
         final alpha = hex.substring(6, 8);
         final rgb = hex.substring(0, 6);
-        return CssColor(int.parse('0x$alpha$rgb'));
+        return Color(int.parse('0x$alpha$rgb'));
     }
   } else if (expression is css.LiteralTerm) {
     switch (expression.valueAsString) {
-      case kCssColorCurrentColor:
-        return CssColor.current();
-      case kCssColorTransparent:
-        return CssColor.transparent();
+      // TODO: add support for `currentcolor`
+      case 'transparent':
+        return const Color(0x00000000);
     }
   }
 

@@ -43,7 +43,7 @@ CssBorder _tryParseBorderSide(CssBorder border, css.Declaration style) {
   }
 
   TextDecorationStyle? borderStyle;
-  CssColor? color = CssColor.current();
+  Color? color;
   // TODO: look for official document regarding this default value
   // WebKit & Blink seem to follow the same (hidden?) specs
   var width = const CssLength(1);
